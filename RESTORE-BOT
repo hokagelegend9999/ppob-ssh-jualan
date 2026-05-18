@@ -1,4 +1,4 @@
-cat << 'EOF' > /root/restore_full.sh
+cat << 'EOF' > /root/restore.sh
 #!/bin/bash
 
 # Definisi Warna Terminal Premium
@@ -13,35 +13,32 @@ echo -e "${CYAN}==================================================${NC}"
 echo -e "${YELLOW}       AUTO RESTORE SYSTEM BOT - HOKAGE LEGEND     ${NC}"
 echo -e "${CYAN}==================================================${NC}"
 
-# Mencari file backup di direktori /root atau direktori saat ini
-ZIP_FILE=$(ls /root/Backup_Bot_*.zip 2>/dev/null | head -n 1)
-if [ -z "$ZIP_FILE" ]; then
-    ZIP_FILE=$(ls ./Backup_Bot_*.zip 2>/dev/null | head -n 1)
-fi
+echo -e "${GREEN}[ 1/5 ]${NC} Memperbarui paket sistem & menginstal dependencies..."
+apt update -y && apt install python3 python3-pip zip unzip sqlite3 wget -y
 
-if [ -z "$ZIP_FILE" ]; then
-    echo -e "${RED}[ ERROR ]${NC} File backup (Backup_Bot_*.zip) tidak ditemukan!"
-    echo -e "${YELLOW}Silakan upload file zip backup Anda ke folder /root/ terlebih dahulu.${NC}"
+echo -e "${GREEN}[ 2/5 ]${NC} Menginstal modul Python yang dibutuhkan..."
+pip3 install pyTelegramBotAPI paramiko requests openpyxl --break-system-packages 2>/dev/null || pip3 install pyTelegramBotAPI paramiko requests openpyxl
+
+echo -e "${GREEN}[ 3/5 ]${NC} Mengunduh data backup dari GitHub..."
+# URL Raw dari file zip di repository GitHub Anda
+GITHUB_URL="https://raw.githubusercontent.com/hokagelegend9999/ppob-ssh-jualan/main/bot_store.zip"
+
+mkdir -p /root/bot_store
+wget -qO /root/bot_store/bot_store.zip "$GITHUB_URL"
+
+if [ ! -f /root/bot_store/bot_store.zip ]; then
+    echo -e "${RED}[ ERROR ]${NC} Gagal mengunduh file bot_store.zip dari GitHub!"
+    echo -e "Pastikan repository bersifat publik atau URL benar."
     exit 1
 fi
 
-echo -e "${GREEN}[ INFO ]${NC} Menemukan file backup: ${YELLOW}$ZIP_FILE${NC}"
-echo -e "${CYAN}--------------------------------------------------${NC}"
-
-echo -e "${GREEN}[ 1/4 ]${NC} Memperbarui paket sistem & menginstal unzip/sqlite3..."
-apt update && apt install python3 python3-pip zip unzip sqlite3 -y
-
-echo -e "${GREEN}[ 2/4 ]${NC} Menginstal modul Python (Telebot, Paramiko, Requests, Openpyxl)..."
-# Menggunakan --break-system-packages untuk mengantisipasi aturan Python di OS baru
-pip3 install pyTelegramBotAPI paramiko requests openpyxl --break-system-packages 2>/dev/null || pip3 install pyTelegramBotAPI paramiko requests openpyxl
-
-echo -e "${GREEN}[ 3/4 ]${NC} Menyiapkan folder tujuan & mengekstrak seluruh data..."
-mkdir -p /root/bot_store
-cp "$ZIP_FILE" /root/bot_store/
+echo -e "${GREEN}[ 4/5 ]${NC} Mengekstrak file backup..."
 cd /root/bot_store || exit
-unzip -o "$(basename "$ZIP_FILE")"
+unzip -o bot_store.zip
+# Hapus file zip setelah diekstrak
+rm -f bot_store.zip
 
-echo -e "${GREEN}[ 4/4 ]${NC} Membuat konfigurasi Service Systemd dengan entrypoint start.py..."
+echo -e "${GREEN}[ 5/5 ]${NC} Mengonfigurasi Service Systemd (start.py)..."
 cat << 'SYS' > /etc/systemd/system/bot-store.service
 [Unit]
 Description=Telegram Bot Store Hokage Legend
@@ -58,7 +55,6 @@ RestartSec=3
 WantedBy=multi-user.target
 SYS
 
-# Memuat ulang daemon, mengaktifkan, dan menyalakan ulang service bot
 systemctl daemon-reload
 systemctl enable bot-store
 systemctl restart bot-store
@@ -66,11 +62,9 @@ systemctl restart bot-store
 echo -e "${CYAN}==================================================${NC}"
 echo -e "${GREEN}      RESTORE SELESAI & BOT BERHASIL DIJALANKAN!   ${NC}"
 echo -e "${CYAN}==================================================${NC}"
-echo -e "${YELLOW}Status Akhir Service Bot (start.py):${NC}"
-echo -e "${CYAN}--------------------------------------------------${NC}"
 systemctl status bot-store --no-pager | head -n 15
 echo -e "${CYAN}--------------------------------------------------${NC}"
-echo -e "Untuk memantau log bot secara realtime, ketik: ${YELLOW}journalctl -u bot-store -f${NC}"
+echo -e "Untuk melihat log realtime, ketik: ${YELLOW}journalctl -u bot-store -f${NC}"
 EOF
-chmod +x /root/restore_full.sh
-/root/restore_full.sh
+chmod +x /root/restore.sh
+/root/restore.sh
