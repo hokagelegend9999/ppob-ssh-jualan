@@ -45,6 +45,7 @@ After=network.target
 
 [Service]
 User=root
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/root/bot_store
 ExecStart=/usr/bin/python3 start.py
 Restart=always
