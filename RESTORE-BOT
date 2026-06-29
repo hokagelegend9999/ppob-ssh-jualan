@@ -10,17 +10,17 @@ NC='\033[0m'
 
 clear
 echo -e "${CYAN}==================================================${NC}"
-echo -e "${YELLOW}       AUTO RESTORE SYSTEM BOT - HOKAGE LEGEND     ${NC}"
+echo -e "${YELLOW}    AUTO RESTORE SYSTEM BOT - HOKAGE LEGEND      ${NC}"
 echo -e "${CYAN}==================================================${NC}"
 
 echo -e "${GREEN}[ 1/5 ]${NC} Memperbarui paket sistem & menginstal dependencies..."
 apt update -y && apt install python3 python3-pip zip unzip sqlite3 wget -y
 
 echo -e "${GREEN}[ 2/5 ]${NC} Menginstal modul Python yang dibutuhkan..."
-pip3 install pyTelegramBotAPI paramiko requests openpyxl --break-system-packages 2>/dev/null || pip3 install pyTelegramBotAPI paramiko requests openpyxl
+# PERBAIKAN: Menambahkan 'PySocks' untuk dukungan proxy
+pip3 install pyTelegramBotAPI paramiko requests openpyxl pandas python-dotenv PySocks --break-system-packages 2>/dev/null || pip3 install pyTelegramBotAPI paramiko requests openpyxl pandas python-dotenv PySocks
 
 echo -e "${GREEN}[ 3/5 ]${NC} Mengunduh data backup dari GitHub..."
-# URL Raw dari file zip di repository GitHub Anda
 GITHUB_URL="https://raw.githubusercontent.com/hokagelegend9999/ppob-ssh-jualan/main/bot_store.zip"
 
 mkdir -p /root/bot_store
@@ -35,7 +35,6 @@ fi
 echo -e "${GREEN}[ 4/5 ]${NC} Mengekstrak file backup..."
 cd /root/bot_store || exit
 unzip -o bot_store.zip
-# Hapus file zip setelah diekstrak
 rm -f bot_store.zip
 
 echo -e "${GREEN}[ 5/5 ]${NC} Mengonfigurasi Service Systemd (start.py)..."
